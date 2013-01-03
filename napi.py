@@ -39,7 +39,6 @@ def f(z):
 
 	return ''.join(b)
 
-
 if(len(sys.argv)==1):
 	print "wy*dalaj na stadion po film"
 	sys.exit(2)
@@ -48,31 +47,32 @@ d = md5.new()
 d.update(open(sys.argv[1]).read(10485760))
 
 def download_subtitles(digest):
-	request_data = { 
-		"downloaded_subtitles_id" : digest, 
-		"mode" : "31", 
-		"client" : "NapiProjekt", 
-		"downloaded_subtitles_lang" : "PL"
-	}
-	try:
-		request_stream = urllib.urlencode(request_data)
-		request = urllib2.Request("http://napiprojekt.pl/api/api-napiprojekt3.php", request_stream)
-		response = urllib2.urlopen(request)
-		xml = ET.XML(response.read())
-		content = xml.find("subtitles").find("content").text
-	except:
-		print "nie ma napisa do filmu"
-		return
-	
-	open("napisy.7z","w").write(base64.b64decode(content))
-	nazwa=sys.argv[1][:-3]+'txt'
+  request_data = { 
+    "downloaded_subtitles_id" : digest, 
+    "mode" : "31", 
+    "client" : "NapiProjekt", 
+    "downloaded_subtitles_lang" : "PL"
+  }
+  try:
+    request_stream = urllib.urlencode(request_data)
+    request = urllib2.Request("http://napiprojekt.pl/api/api-napiprojekt3.php", request_stream)
+    response = urllib2.urlopen(request)
+    xml = ET.XML(response.read())
+    content = xml.find("subtitles").find("content").text
+  except:
+    print "nie ma napisa do filmu: ", sys.argv[1]
+    sys.exit(2)
+  location = os.path.dirname(sys.argv[1])
+  archivepath = os.path.join(location,"napisy.7z")
+  open(archivepath,"w").write(base64.b64decode(content))
+  nazwa=os.path.join(location,sys.argv[1][:-3]+'txt')
 
-	if (os.system("7z x -y -so -piBlm8NTigvru0Jr0 napisy.7z 2>/dev/null >\""+nazwa+"\"")):
-		print "nie ma napisa do filmu"
-		os.remove(nazwa)        
-	else:
-		print "napisy pobrano, milordzie!"
+  if (os.system("/usr/local/bin/7z x -y -so -piBlm8NTigvru0Jr0 "+archivepath+" 2>/dev/null >\""+nazwa+"\"")):
+    print "nie ma napisa do filmu", sys.argv[1]
+    os.remove(nazwa)        
+  else:
+    print "napisy pobrano, milordzie!"
 
-	os.remove("napisy.7z")
+  os.remove(archivepath)
 
 download_subtitles(d.hexdigest())
